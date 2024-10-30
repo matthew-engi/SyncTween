@@ -18,7 +18,7 @@
 1. **Lower Server Load**  
    By handling animations on the client side, SyncTween reduces the processing burden on the server.
 
-2. **Smoother animations**
+2. **Smoother animations**  
     Compared to the server, the client runs at a faster clock, meaning the animations will not be "choppy".
     
 ## Key Features
@@ -93,7 +93,7 @@ SyncTween.new(
   On the client, this will return everything that is playing, on the server, it will return only Syncs that the player can view.
 
 - `SyncTween.fps(freq: number)`  
-  Set the FPS (frames per second) for all synchronized animations that don't have a specific framerate.
+  Set the FPS (frames per second) for all synchronized animations that don't have a specific framerate.  
   (Default: -1) (Uncapped).
 
 ---
@@ -103,7 +103,7 @@ SyncTween.new(
   Start the animation.
 
 - `Pause()`  
-  Pause the animation.
+  Pause the animation.  
   (Does not apply to custom animations)
 
 - `Cancel()`  

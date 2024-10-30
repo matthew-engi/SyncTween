@@ -43,7 +43,7 @@ local function bindCallbackToSteppedWithFPS(callback: () -> (), FPS: number, del
 end
 
 Custom.Rainbow = {
-	clk = function(signal, object: Highlight, original, properties, totalDelta, FPS)	
+	clk = function(signal, object: Highlight, original, properties, totalDelta, FPS)
 		local start: number = os.clock() - totalDelta
 		local callback = function()
 			local hue = start % 1
