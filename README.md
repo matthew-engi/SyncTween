@@ -5,27 +5,35 @@
 
 ---
 
-## Sources
+## Links
 - More information on TweenService found [here](https://create.roblox.com/docs/reference/engine/classes/TweenService).
-- This project was inspired by [TweenService2](https://github.com/Steadyon/TweenServiceV2).
+- If you are unfamiliar with how replication works, please look at [this](https://devforum.roblox.com/t/client-replication-101-the-guide-to-replicating-effects-to-clients) DevForum post.
+- This project was inspired by [TweenService2](https://github.com/Steadyon/TweenServiceV2), although not built onto it.
 
 ---
 
 **SyncTween** is a tweening library designed to facilitate server-to-client animations, with several features that go beyond traditional tweening modules.
 
+## Advantages
+1. **Lower Server Load**  
+   By handling animations on the client side, SyncTween reduces the processing burden on the server.
+
+2. **Smoother animations**
+    Compared to the server, the client runs at a faster clock, meaning the animations will not be "choppy".
+    
 ## Key Features
 1. **Syncing Animations**  
    SyncTween allows animations to be synchronized across all clients. Here's the definition of "synchronization":
-   - Synchronization ensures that all clients see the same animations, though some Tweens may start at different points.
+   - Synchronization ensures that all clients see the animations in the same state at the same time.
    - By default, all tweens will end at the same time.
 
-2. **Custom Animations (Client-Side)**  
+2. **Custom Animations**  
    You can define custom animations on the client side. Check out the `Custom` module for examples.
 
 3. **Support for Streaming Enabled & Streaming Out**  
    SyncTween works with **Streaming Enabled** and **Streaming Out** via `CollectionService`.
 
-4. **Client-Only Animations with Optional Replication**  
+4. **Selective Replication**  
    Make animations visible to selected clients without replicating them to the server. For example, hide a door for User X but keep it visible for others.
 
 ## Current Limitations
