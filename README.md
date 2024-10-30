@@ -9,7 +9,7 @@
 
 ## Key Features
 1. **Syncing Animations**  
-   SyncTween allows animations to be synchronized across all clients. However, the definition of "synchronization" in this module differs:
+   SyncTween allows animations to be synchronized across all clients. Here's the definition of "synchronization":
    - Synchronization ensures that all clients see the same animations, though some Tweens may start at different points.
    - By default, all tweens will end at the same time.
 
@@ -24,7 +24,7 @@
 
 ## Current Limitations
 1. Players receiving a signal can know who else is receiving that same signal.
-2. Custom animations cannot currently be paused.
+2. Custom animations cannot be paused.
 
 ---
 
@@ -51,7 +51,7 @@ SyncTween.new(
     ```lua
     { Time = 1, EasingStyle = Enum.EasingStyle.Linear, EasingDirection = Enum.EasingDirection.InOut }
     ```
-  - It’s recommended to use `TweenInfo` to avoid confusion, though the change was necessary for replication purposes.
+  - It’s recommended to use `TweenInfo` to avoid confusion, the change was necessary for replication purposes.
 
 ### Examples:
 1. Animate a part's position:
@@ -76,9 +76,10 @@ SyncTween.new(
 ## Global Methods
 - `SyncTween.get(object: Instance, player: Player): { Sync }`  
   Retrieve all animations currently playing on the specified object.
+  On the client, this will return everything that is playing, on the server, it will return only Syncs that the player can view.
 
 - `SyncTween.fps(freq: number)`  
-  Set the FPS (frames per second) for animations.
+  Set the FPS (frames per second) for all animations (Default: -1 (Uncapped)).
 
 ---
 
@@ -88,6 +89,7 @@ SyncTween.new(
 
 - `Pause()`  
   Pause the animation.
+  (Does not apply to custom animations)
 
 - `Cancel()`  
   Cancel the animation.

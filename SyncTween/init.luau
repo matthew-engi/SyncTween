@@ -93,67 +93,13 @@ SyncTween.__index = SyncTween
 (GNU GPLv3 License)
 
 Welcome to SyncTween!
-This is a tweening library that is designed to help with Server to Client animations.
+This is a tweening library that is designed to help with server-to-client animations.
 
-This module supports a couple of things other modules don't:
-    1- Syncing (synchronized on all clients) animations from the server to the client.
-		-> The difference in this module is that "Synchronizing" isn't making all the Tweens end at the same time.
-		-> This is default behavior in this module, all tweens will end at the same time.
-		-> Synchronizing means that each client sees the same, some Tweens may start at a different position than the start.
-    2- Custom animations defined on the client.
-		-> Examples are provided inside of the Custom module.
-    3- Support for Streaming Enabled and Streaming Out
-		-> With the use of CollectionService.
-	4- Support for Certain client only animations with the choice of Replication to the Server.
-		-> The possibility to make certain modifications only visible to some people.
-		-> For instance, making a door disappear for user X, but not replicating to the server after.
+The library is designed to be as flexible as possible, allowing developers to create custom animations
+For more information about this module, please head to https://github.com/CreacOwo/SyncTween!
 
-This module currently has some limitations:
-    1- A player that receives a signal can know who else is receiving the signal.
-	2- A "Custom" animation is not able to be "Paused".
---
+If you have any questions, feel free to contact me on the DevForums.
 
-Here is how you construct a SyncTween:
-    - SyncTween.new(
-        object: Instance,                                       -- 1. The object that you want to animate.
-        tweenInfo: (TweenInfo | Helper.TweenArray | string)?,   -- 2. The TweenInfo of the animation.
-        properties: { [string]: any }?,                         -- 3. The properties that you want to animate.
-        players: { Player }?,                                   -- 4. The players that you want to animate.
-		replicate: boolean?,                                    -- 5. Whether the animation should be replicated.
-        sync: (boolean | number)?,                              -- 6. The synchronization of the animation.
-		uuid: string?,                                          -- 7. The UUID of the animation. (Not needed)
-    )
-
-	Notes:
-		2. (tweenInfo): You can send a TweenInfo, a Helper.TweenArray or a string.
-			- If you send a string, it will be a custom animation.
-			- A "TweenArray" Is something like the following:
-				{ Time = 1, EasingStyle = Enum.EasingStyle.Linear, EasingDirection = Enum.EasingDirection.InOut }
-			- I heavily encourage that you use the TweenInfo, it is less confusing but this change was needed for replication.
-
-	Examples:
-		1. SyncTween.new(workspace.Part, TweenInfo.new(1), { Position = Vector3.new(0, 10, 0) })
-			-- Animates the part to the position (0, 10, 0) in 1 second.
-		2. SyncTween.new(workspace.Part, nil, { Color = Color3.new(1,0,0) }, { Players.Player1 }, false)
-			-- Turns the part to the color red for Player1.
-		3. SyncTween.new(workspace.Part.Highlight, "Rainbow", nil, nil, nil, 10)
-			-- Plays a rainbow animation @ 10 FPS.
-
-The class contains global methods:
-    - SyncTween.get(object: Instance, player: Player): { Sync } -- 1. Get all the animations that are playing.
-    - SyncTween.fps(freq: number)                               -- 2. Set the FPS of the animations.
-
-And here are the methods of the SyncTween class:
-    - Play()                                                    -- 1. Play the animation.
-    - Pause()                                                   -- 2. Pause the animation.
-    - Cancel()                                                  -- 3. Cancel the animation.
-
-Summary:
-	You can create a SyncTween (Sync for short) using SyncTween.new().
-	This function inheritates the normal methods from a tween (:Play() :Pause() :Cancel())
-	Compared to TweenService, SyncTween offers multiple settings from the default behavior
-		using the tweenInfo, players, replicate, sync and uuid parameters.
-	The modules was written with --!strict mode, and the Sync type is exported.
 --]]
 
 -------------------------------------------------------------------------------------------------
