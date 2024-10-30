@@ -5,6 +5,12 @@
 
 ---
 
+## Sources
+- More information on TweenService found [here](https://create.roblox.com/docs/reference/engine/classes/TweenService).
+- This project was inspired by [TweenService2](https://github.com/Steadyon/TweenServiceV2).
+
+---
+
 **SyncTween** is a tweening library designed to facilitate server-to-client animations, with several features that go beyond traditional tweening modules.
 
 ## Key Features
@@ -79,7 +85,8 @@ SyncTween.new(
   On the client, this will return everything that is playing, on the server, it will return only Syncs that the player can view.
 
 - `SyncTween.fps(freq: number)`  
-  Set the FPS (frames per second) for all animations (Default: -1 (Uncapped)).
+  Set the FPS (frames per second) for all synchronized animations that don't have a specific framerate.
+  (Default: -1) (Uncapped).
 
 ---
 
