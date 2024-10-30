@@ -29,6 +29,7 @@
 
 2. **Custom Animations**  
    You can define custom animations on the client side. Check out the `Custom` module for examples.
+   You can also use other Tweening modules combined with this module using a custom animation.
 
 3. **Support for Streaming Enabled & Streaming Out**  
    SyncTween works with **Streaming Enabled** and **Streaming Out** via `CollectionService`.

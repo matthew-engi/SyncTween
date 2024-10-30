@@ -10,9 +10,9 @@ export type CustomImpl = {
 	clk: (
 		signal: Signal.RBXScriptSignal, object: Instance, original: { [string]: any }?,
 		properties: { [string]: any }?, totalDelta: number, FPS: number
-	) -> any,
+	) -> ...any,
 
-	clear: ( (any) -> () )?;
+	clear: ( (...any) -> () )?;
 	orig: ( (object: Instance, original: { [string]: any }?, properties: { [string]: any }?) -> { [string]: any } )?
 }
 ----------------------------------------------------
@@ -43,7 +43,8 @@ local function bindCallbackToSteppedWithFPS(callback: () -> (), FPS: number, del
 end
 
 Custom.Rainbow = {
-	clk = function(signal, object: Highlight, original, properties, totalDelta, FPS)
+	-- Example for an animated Highlight.
+	clk = function(signal, object, original, properties, totalDelta, FPS)
 		local start: number = os.clock() - totalDelta
 		local callback = function()
 			local hue = start % 1

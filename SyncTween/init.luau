@@ -90,16 +90,27 @@ SyncTween.__index = SyncTween
 
 --[[
 
-@creaco - October 30th 2024
-(GNU GPLv3 License)
+SyncTween - A rich TweenService replication module.
+    Copyright (C) 2024  @creacowo
 
-Welcome to SyncTween!
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+--
+
 This is a tweening library that is designed to help with server-to-client animations.
 
 The library is designed to be as flexible as possible, allowing developers to create custom animations
 For more information about this module, please head to https://github.com/CreacOwo/SyncTween!
-
-If you have any questions, feel free to contact me on the DevForums.
 
 --]]
 
@@ -120,6 +131,100 @@ local signalTween: RemoteEvent = script.signalTween -- Signal the tween informat
 local Controllers: { [Instance]: Controls } = {} -- A table of all the animations that are currently playing
 
 -------------------------------------------------------------------------------------------------
+
+-- // Private Methods
+local function notifyPlayers(players: { Player }, self: Sync, creation: boolean, reset: boolean?)
+	for _, player in pairs(players) do
+		signalTween:FireClient(player, self, creation, reset)
+	end
+end
+
+local function createSyncObject(data: self): Sync
+	return SyncTween.new(data.object, data.tween, data.properties, data.players,
+		data.replicate, data.sync, data.UUID, data.start, data.delta, data.original
+	):Play()
+end
+
+local function setObjectPropertiesToAlpha(self: Sync, alpha: number)
+	for property, value in self.properties do
+		Helper.changeProperty(
+			self.object, property,
+			Helper.lerp(alpha, self.original[property], value)
+		)
+	end
+end
+
+local function setSynchronizedThread(self: Sync, Finished: Signal.RBXScriptSignal, FPS: number): RBXScriptConnection
+	local clk: number = os.clock()
+	local saturated: boolean = false
+	self.connection = RunService.RenderStepped:Connect(function(deltaTime)
+		if saturated then return end -- The animation has ended.
+		if not self.object then saturated = true return end -- The object has been destroyed.
+
+		self.delta += deltaTime
+
+		if (os.clock() - clk) < 1/FPS then
+			return -- Prevent running too fast.
+		end
+		clk = os.clock()
+
+		local alpha: number, overflow: boolean = Helper.getAlpha(self.tween, self.delta)
+		saturated = overflow
+
+		setObjectPropertiesToAlpha(self, alpha)
+
+		-- Check if the saturation has been reached.
+		if saturated then
+			Finished:Fire()
+		end
+	end)
+end
+
+local function setUnsynchronizedThread(self: Sync, Finished: Signal.RBXScriptSignal)
+	self.tween = Helper.modifyTween(self.tween, "Time", self.tween.Time - self.delta)
+	self.animation = TweenService:Create(self.object, self.tween, self.properties)
+	if self.animation then
+		self.animation:Play()
+		self.connection = self.animation.Completed:Once(function()
+			Finished:Fire()
+		end)
+	end
+end
+
+local function cancelInterlappingAnimations(array: { Sync }, self: Sync)
+	if self.properties then
+		for _, controller in pairs(array) do
+			if not controller then continue end
+
+			for property in self.properties do
+				if self.properties[property] then
+					controller:Pause() -- Another Controller is modifying this property.
+				end
+			end
+		end
+	end
+end
+
+local function originalSnapshot(self: Sync, properties: { [string]: any }): { [string]: any }
+	if self.properties and self.original then
+
+		for property in self.properties do
+			if self.original[property] then continue end
+
+			local current = Helper.getProperty(self.object, property)
+
+			if current then
+				self.original[property] = current
+			elseif typeof(self.tween) ~= "string" then
+				-- Unless self.tween is a string, do not allow "fake" properties.
+				self.properties[property] = nil
+			end
+		end
+	end
+end
+
+-------------------------------------------------------------------------------------------------
+
 if RunService:IsServer() then
 	-- Here, we are creating a metatable that will allow us to listen to new objects.
 	setmetatable(Controllers, {
@@ -142,48 +247,20 @@ local Controller = {
 			-- Here, we are adding a new controller to the list of controllers (Playing).
 			-------------------------------------------------------------------------------------------------
 			-- Verifications before proceeding:
-			if self.properties then
-				for _, controller in pairs(array) do
-					if not controller then continue end
-
-					for property in self.properties do
-						if self.properties[property] then
-							controller:Pause() -- Another Controller is modifying this property.
-						end
-					end
-				end
-			end
+			cancelInterlappingAnimations(array, self)
 			-------------------------------------------------------------------------------------------------
 
 			self.Played:Fire()
 
 			-- Cache the original properties.
-			if self.properties then
-
-				for property in self.properties do
-					if self.original[property] then continue end
-
-					local current = Helper.getProperty(self.object, property)
-
-					if current then
-						self.original[property] = current
-					else
-						-- Unless self.tween is a string, do not allow "fake" properties.
-						if typeof(self.tween) ~= "string" then
-							self.properties[property] = nil
-						end
-					end
-				end
-			end
+			originalSnapshot(self, self.properties)
 
 			-------------------------------------------------------------------------------------------------
 			-- Here, depending on the environment, we will handle this addition differently.
 			if RunService:IsServer() then
 				-- On the server, we take care of distributing the tween to the clients.
 				self.start = workspace:GetServerTimeNow()
-				for _, player in self.players or Players:GetPlayers() do
-					signalTween:FireClient(player, self, true)
-				end
+				notifyPlayers(self.players or Players:GetPlayers(), self, true)
 
 				-------------------------------------------------------------------------------------------------
                 --[[
@@ -271,46 +348,10 @@ local Controller = {
 					-- 2-3. Synchronized / Unsynchronized Animation
 					if self.sync then
 						-- The animation needs to be synchronized with the server.
-
-						local clk: number = os.clock()
-						local saturated: boolean = false
-						self.connection = RunService.RenderStepped:Connect(function(deltaTime)
-							if saturated then return end -- The animation has ended.
-							if not self.object then saturated = true return end -- The object has been destroyed.
-
-							self.delta += deltaTime
-
-							if (os.clock() - clk) < 1/FPS then
-								return -- Prevent running too fast.
-							end
-							clk = os.clock()
-
-							local alpha: number, overflow: boolean = Helper.getAlpha(self.tween, self.delta)
-							saturated = overflow
-
-							for property, value in self.properties do
-								Helper.changeProperty(
-									self.object, property,
-									Helper.lerp(alpha, self.original[property], value)
-								)
-							end
-
-							-- Check if the saturation has been reached.
-							if saturated then
-								Finished:Fire()
-							end
-						end)
+						setSynchronizedThread(self, Finished, FPS)
 					else
 						-- The animation does not need to be synchronized with the server.
-						self.tween = Helper.modifyTween(self.tween, "Time", self.tween.Time - self.delta)
-						self.animation = TweenService:Create(self.object, self.tween, self.properties)
-						if self.animation then
-							self.animation:Play()
-							self.connection = self.animation.Completed:Once(function()
-								Finished:Fire()
-							end)
-						end
-
+						setUnsynchronizedThread(self, Finished)
 					end
 				end
 			end
@@ -331,9 +372,7 @@ local Controller = {
 				-------------------------------------------------------------------------------------------------
 
 				-- On the server, we take care of distributing the tween to the clients.
-				for _, player in self.players or Players:GetPlayers() do
-					signalTween:FireClient(player, self, false, reset)
-				end
+				notifyPlayers(self.players or Players:GetPlayers(), self, false, reset)
 
 				-- We will set the properties to the expected values.
 				if not reset and self.replicate then
@@ -341,20 +380,10 @@ local Controller = {
 
 					if typeof(self.tween) ~= "string" then
 						if self.properties and self.original then
-							local alpha: number = (self.tween ~= nil) 
-								and Helper.getAlpha(self.tween, self.delta)
+							local alpha: number = (self.tween ~= nil) and Helper.getAlpha(self.tween, self.delta)
 								or 1
-
-							for property, value in self.properties do
-								Helper.changeProperty(
-									self.object, property,
-									Helper.lerp(
-										alpha,
-										self.original[property],
-										value
-									)
-								)
-							end
+							
+							setObjectPropertiesToAlpha(self, alpha)
 						end
 					end
 				end
@@ -533,12 +562,12 @@ function SyncTween:Cancel(original: { [string]: any }?)
 	removeSync(self, true)
 
 	-- Reset the properties to the original ones
-	if original or self.original then
-		for property, value in original or self.original do
-			Helper.changeProperty(
-				self.object, property, value
-			)
-		end
+	if original then
+		self.original = original
+	end
+
+	if self.original then
+		setObjectPropertiesToAlpha(self, 0)
 	end
 
 	self.delta = 0
@@ -552,12 +581,6 @@ if RunService:IsServer() then
 		return SyncTween.get(object, player)
 	end
 else
-	local function createSyncObject(data: self): Sync
-		return SyncTween.new(data.object, data.tween, data.properties, data.players,
-			data.replicate, data.sync, data.UUID, data.start, data.delta, data.original
-		):Play()
-	end
-
 	signalTween.OnClientEvent:Connect(function(data: self, creation: boolean, reset: boolean?)
 		if creation then
 			createSyncObject(data):Play()
