@@ -8,12 +8,26 @@ local Signal = require(script.Parent.Signal)
 
 export type CustomImpl = {
 	clk: (
-		signal: Signal.RBXScriptSignal, object: Instance, totalDelta: number, FPS: number
+		signal: Signal.RBXScriptSignal, object: Instance, original: { [string]: any }?,
+		properties: { [string]: any }?, totalDelta: number, FPS: number
 	) -> any,
 
 	clear: ( (any) -> () )?;
-	orig: ( (object: Instance, original: { [string]: any }) -> { [string]: any } )?
+	orig: ( (object: Instance, original: { [string]: any }?, properties: { [string]: any }?) -> { [string]: any } )?
 }
+----------------------------------------------------
+
+--[[
+-- // Notes:
+	- These are custom implementations for animations.
+	- In the case where the animation is custom, it is possible to pass anything through the `properties` parameter.
+
+-- // Example:
+	SyncTween.new(workspace.Part.Highlight, "Rainbow") -> This will use the `Rainbow` implementation.
+--]]
+
+----------------------------------------------------
+
 
 local Custom = {} :: { [string]: CustomImpl }
 
@@ -24,14 +38,12 @@ local function bindCallbackToSteppedWithFPS(callback: () -> (), FPS: number, del
 		if (os.clock() - last) < 1/FPS then return end
 		last = os.clock()
 
-		callback() -- Use unpack to pass the arguments
+		callback()
 	end)
 end
 
 Custom.Rainbow = {
-	clk = function(signal, object, totalDelta, FPS)
-		local object: Highlight = (object :: Highlight)
-		
+	clk = function(signal, object: Highlight, original, properties, totalDelta, FPS)	
 		local start: number = os.clock() - totalDelta
 		local callback = function()
 			local hue = start % 1
@@ -51,7 +63,7 @@ Custom.Rainbow = {
 		connection:Disconnect()
 	end,
 
-	orig = function(object, original)
+	orig = function(object, properties, original)
 		local object: Highlight = (object :: Highlight)
 
 		return {FillColor = object.FillColor}

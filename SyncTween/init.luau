@@ -2,6 +2,7 @@
 
 local Modules = script:WaitForChild("Modules")
 
+-- // Sub-modules
 local Helper = require(Modules.Helper)
 local Signal = require(Modules.Signal)
 local Custom = require(Modules.Custom)
@@ -166,6 +167,11 @@ local Controller = {
 
 					if current then
 						self.original[property] = current
+					else
+						-- Unless self.tween is a string, do not allow "fake" properties.
+						if typeof(self.tween) ~= "string" then
+							self.properties[property] = nil
+						end
 					end
 				end
 			end
@@ -197,7 +203,7 @@ local Controller = {
 					if typeof(self.tween) == "string" then
 						local Implementation: Custom.CustomImpl = Custom[self.tween]
 						if Implementation and Implementation.orig then
-							self.original = Implementation.orig(self.object, self.original)
+							self.original = Implementation.orig(self.object, self.original, self.properties)
 						end
 					else
 						-- 2-3. Set time.
@@ -252,7 +258,7 @@ local Controller = {
 					-- Custom animation here.
 					local Implementation: Custom.CustomImpl = Custom[self.tween]
 					if Implementation then
-						self.temporary = Implementation.clk(Finished, self.object, self.delta, FPS)
+						self.temporary = Implementation.clk(Finished, self.object, self.original, self.properties, self.delta, FPS)
 					end
 				else
 
