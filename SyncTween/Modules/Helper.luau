@@ -1,0 +1,162 @@
+--!strict
+
+local Helper = {}
+local settings = require(script.Parent.settings)
+
+-- // Services
+local TweenService = game:GetService("TweenService")
+----------------------------------------------------
+
+-- // Types
+export type TweenArray = {
+	Time: number,
+	EasingStyle: Enum.EasingStyle,
+	EasingDirection: Enum.EasingDirection,
+	RepeatCount: number,
+	Reverses: boolean,
+	DelayTime: number,
+}
+
+function Helper.isTweenable(value: any): boolean
+	return table.find(settings.TWEENABLE, typeof(value)) ~= nil
+end
+
+function Helper.getProperty(object: Instance, property: string): any?
+	local success, value = pcall(function()
+		return (object :: any)[property]
+	end)
+	
+	if not success then
+		warn(
+			("Property %s is not valid for class %s."):format(property, object.ClassName)
+		)
+		return nil
+	else
+		return value
+	end
+end
+
+function Helper.changeProperty(object: Instance, property: string, value: any)
+	local success = pcall(function()
+		(object :: any)[property] = value
+	end)
+		
+	if not success then
+		warn(
+			("Property %s is not valid for class %s."):format(property, object.ClassName)
+		)
+	end
+end
+
+function Helper.tweenToArray(tween: TweenInfo | TweenArray): TweenArray
+	if typeof(tween) == "table" then
+		return tween
+	end
+	
+	local array: TweenArray = {
+		Time = tween.Time,
+		EasingStyle = tween.EasingStyle,
+		EasingDirection = tween.EasingDirection,
+		RepeatCount = tween.RepeatCount,
+		Reverses = tween.Reverses,
+		DelayTime = tween.DelayTime
+	}
+		
+	return array
+end
+
+function Helper.modifyTween(tween: TweenInfo | TweenArray, index: string, value: any): TweenInfo
+	local array = Helper.tweenToArray(tween)
+	array[index] = value
+	return Helper.arrayToTween(array)
+end
+
+function Helper.arrayToTween(array: TweenInfo | TweenArray): TweenInfo
+	if typeof(array) == "TweenInfo" then
+		return array
+	end
+	
+	return TweenInfo.new(
+		array.Time,
+		Enum.EasingStyle[array.EasingStyle.Name],
+		Enum.EasingDirection[array.EasingDirection.Name],
+		array.RepeatCount,
+		array.Reverses,
+		array.DelayTime
+	)
+end
+
+function Helper.getCycleTweenTime(tween: TweenInfo | TweenArray): number
+	local base: number = tween.Time
+	if tween.Reverses then
+		base *= 2
+	end
+	
+	return base + tween.DelayTime
+end
+
+function Helper.getFullTweenTime(tween: TweenInfo | TweenArray): number
+	return Helper.getCycleTweenTime(tween) * (
+		tween.RepeatCount + 1
+	)
+end
+
+function Helper.getAlpha(tween: TweenInfo | TweenArray, diff: number): (number, boolean)
+	local alpha: number = 0
+	local new_rel: number = 0
+	
+	local sway: number = tween.Time
+	local cycle: number = Helper.getCycleTweenTime(tween)
+	local total: number = Helper.getFullTweenTime(tween)
+	local relative: number = diff % cycle
+	
+	if diff > total then
+		if tween.Reverses then
+			return 0, true
+		else
+			return 1, true
+		end
+	end
+
+	if relative < tween.DelayTime then
+		alpha = 0
+	else
+		new_rel = relative - tween.DelayTime
+		if new_rel < sway then
+			alpha = new_rel / sway
+		else
+			alpha = 1 - (new_rel - sway) / sway
+		end
+	end
+
+	alpha = TweenService:GetValue(alpha, tween.EasingStyle, tween.EasingDirection)
+	
+	return alpha, false
+end
+
+function Helper.getFinalAlpha(tween: (TweenInfo | TweenArray)?)
+	local alpha: number
+	if tween then
+		if tween.Reverses then
+			alpha = 0
+		else
+			alpha = 1
+		end
+	else
+		alpha = 1
+	end
+
+	return alpha
+end
+
+function Helper.lerp(alpha: number, start: any, final: any): any
+	if typeof(start) == "number" then
+		return start + (final - start) * alpha
+	elseif typeof(start) == "string" then
+		return final:sub(1, math.floor(#final * alpha))
+	else
+		return start:Lerp(final, alpha)
+	end
+end
+
+return Helper

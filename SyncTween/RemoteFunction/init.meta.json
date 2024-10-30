@@ -1,0 +1,6 @@
+{
+    "className": "RemoteFunction",
+    "properties": {
+        "Name": "getTween"
+    }
+}
