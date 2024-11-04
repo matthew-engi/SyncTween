@@ -52,10 +52,10 @@ To construct a SyncTween, use the following syntax:
 ```lua
 SyncTween.new(
     object: Instance,                                       -- The object you want to animate.
-    tweenInfo: (TweenInfo | Helper.TweenArray | string)?,   -- TweenInfo of the animation.
+    tweenInfo: (TweenInfo | TweenArray | string)?,          -- TweenInfo of the animation.
     properties: { [string]: any }?,                         -- Properties you want to animate.
-    replicate: boolean?,                                    -- Should the animation be replicated?
-    sync: (boolean | number)?,                              -- Synchronization of the animation.
+    replicate: boolean?,                                    -- Should the animation be replicated to the server?
+    sync: (boolean | number)?,                              -- Synchronize all clients / set framerate.
     uuid: string?                                           -- UUID of the animation (optional).
 )
 ```
@@ -78,7 +78,7 @@ SyncTween.new(
 
 2. Animate a color for a specific player:
     ```lua
-    SyncTween.new(workspace.Part, nil, { Color = Color3.new(1, 0, 0) }, false):Play({Player})
+    SyncTween.new(workspace.Part, nil, { Color = Color3.new(1, 0, 0) }, false):Play({Player1})
     ```
     This will turn the part red only for Player1.
 
