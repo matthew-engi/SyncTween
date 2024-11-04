@@ -1,9 +1,9 @@
-# SyncTween 
-A rich TweenService replication module.
+# SyncTween
 
 ### Created by @creaco - October 30th, 2024  
 *Licensed under the GNU GPLv3 License*
 
+**SyncTween** is a tweening library designed to facilitate server-to-client animations, with several features that go beyond traditional tweening modules.
 ---
 
 ## Links 🔗
@@ -12,8 +12,6 @@ A rich TweenService replication module.
 - This project was inspired by [TweenService2](https://github.com/Steadyon/TweenServiceV2), although not built onto it.
 
 ---
-
-**SyncTween** is a tweening library designed to facilitate server-to-client animations, with several features that go beyond traditional tweening modules.
 
 ## Advantages 👍
 1. **Lower Server Load**  
