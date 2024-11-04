@@ -1,11 +1,11 @@
-# SyncTween
+# SyncTween - A rich TweenService replication module.
 
 ### Created by @creaco - October 30th, 2024  
 *Licensed under the GNU GPLv3 License*
 
 ---
 
-## Links
+## Links 🔗
 - More information on TweenService found [here](https://create.roblox.com/docs/reference/engine/classes/TweenService).
 - If you are unfamiliar with how replication works, please look at [this](https://devforum.roblox.com/t/client-replication-101-the-guide-to-replicating-effects-to-clients) DevForum post.
 - This project was inspired by [TweenService2](https://github.com/Steadyon/TweenServiceV2), although not built onto it.
