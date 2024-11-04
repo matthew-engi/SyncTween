@@ -1,4 +1,5 @@
-# SyncTween - A rich TweenService replication module.
+# SyncTween 
+A rich TweenService replication module.
 
 ### Created by @creaco - October 30th, 2024  
 *Licensed under the GNU GPLv3 License*
