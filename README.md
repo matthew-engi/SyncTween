@@ -4,6 +4,7 @@
 *Licensed under the GNU GPLv3 License*
 
 **SyncTween** is a tweening library designed to facilitate server-to-client animations, with several features that go beyond traditional tweening modules.
+
 ---
 
 ## Links 🔗
