@@ -31,33 +31,29 @@ export type CustomImpl = {
 
 local Custom = {} :: { [string]: CustomImpl }
 
-local function bindCallbackToSteppedWithFPS(callback: () -> (), FPS: number, deltaTime: number?)
+local function bindCallbackToSteppedWithFPS(callback: (delta: number) -> (), FPS: number, deltaTime: number?)
+	local start: number = os.clock()
 	local last: number = os.clock()
 
 	return RunService.RenderStepped:Connect(function()
 		if (os.clock() - last) < 1/FPS then return end
 		last = os.clock()
 
-		callback()
+		callback(os.clock() - start)
 	end)
 end
 
 Custom.Rainbow = {
 	-- Example for an animated Highlight.
 	clk = function(signal, object, original, properties, totalDelta, FPS)
-		local start: number = os.clock() - totalDelta
-		local callback = function()
-			local hue = start % 1
+		local object: Highlight = (object :: Highlight)
+
+		local callback = function(delta: number)
+			local hue = delta % 1
 			object.FillColor = Color3.fromHSV(hue, 1, 1)
 		end
 
-		local connection = bindCallbackToSteppedWithFPS(callback, FPS, totalDelta)
-
-		signal:Once(function()
-			connection:Disconnect()
-		end)
-
-		return connection
+		return bindCallbackToSteppedWithFPS(callback, FPS, totalDelta)
 	end,
 
 	clear = function(connection: RBXScriptConnection)
@@ -68,6 +64,29 @@ Custom.Rainbow = {
 		local object: Highlight = (object :: Highlight)
 
 		return {FillColor = object.FillColor}
+	end,
+}
+
+Custom.Rotation = {
+	clk = function(signal, object, original, properties, totalDelta, FPS)
+		local object: BasePart = (object :: BasePart)
+
+		local callback = function(delta: number)
+			local ydir = delta % 360
+			object.Orientation = Vector3.new(0, math.sin(ydir)*360, 0)
+		end
+
+		return bindCallbackToSteppedWithFPS(callback, FPS, totalDelta)
+	end,
+
+	clear = function(connection: RBXScriptConnection)
+		connection:Disconnect()
+	end,
+
+	orig = function(object, properties, original)
+		local object: BasePart = (object :: BasePart)
+
+		return {Orientation = object.Orientation}
 	end,
 }
 

@@ -25,25 +25,40 @@ function Helper.getProperty(object: Instance, property: string): any?
 	local success, value = pcall(function()
 		return (object :: any)[property]
 	end)
-	
+
 	if not success then
-		warn(
-			("Property %s is not valid for class %s."):format(property, object.ClassName)
-		)
 		return nil
 	else
 		return value
 	end
 end
 
+function Helper.getAllProperties(object: Instance, properties: { [string]: any }): { [string]: any }
+	local values: { [string]: any } = {}
+
+	for property, value in pairs(properties) do
+		values[property] = Helper.getProperty(object, property)
+	end
+	
+	return values
+end
+
 function Helper.changeProperty(object: Instance, property: string, value: any)
 	local success = pcall(function()
 		(object :: any)[property] = value
 	end)
-		
+
 	if not success then
 		warn(
 			("Property %s is not valid for class %s."):format(property, object.ClassName)
+		)
+	end
+end
+
+function Helper.bulkChangePropertyWithAlpha(object: Instance, original: { [string]: any }, final: { [string]: any }, alpha: number)
+	for property, value in pairs(final) do
+		Helper.changeProperty(object, property,
+			value and Helper.lerp(alpha, original[property], value) or original[property]
 		)
 	end
 end
@@ -52,7 +67,7 @@ function Helper.tweenToArray(tween: TweenInfo | TweenArray): TweenArray
 	if typeof(tween) == "table" then
 		return tween
 	end
-	
+
 	local array: TweenArray = {
 		Time = tween.Time,
 		EasingStyle = tween.EasingStyle,
@@ -61,7 +76,7 @@ function Helper.tweenToArray(tween: TweenInfo | TweenArray): TweenArray
 		Reverses = tween.Reverses,
 		DelayTime = tween.DelayTime
 	}
-		
+
 	return array
 end
 
@@ -75,7 +90,7 @@ function Helper.arrayToTween(array: TweenInfo | TweenArray): TweenInfo
 	if typeof(array) == "TweenInfo" then
 		return array
 	end
-	
+
 	return TweenInfo.new(
 		array.Time,
 		Enum.EasingStyle[array.EasingStyle.Name],
@@ -91,7 +106,7 @@ function Helper.getCycleTweenTime(tween: TweenInfo | TweenArray): number
 	if tween.Reverses then
 		base *= 2
 	end
-	
+
 	return base + tween.DelayTime
 end
 
@@ -104,17 +119,19 @@ end
 function Helper.getAlpha(tween: TweenInfo | TweenArray, diff: number): (number, boolean)
 	local alpha: number = 0
 	local new_rel: number = 0
-	
+
 	local sway: number = tween.Time
 	local cycle: number = Helper.getCycleTweenTime(tween)
 	local total: number = Helper.getFullTweenTime(tween)
 	local relative: number = diff % cycle
 	
-	if diff > total then
-		if tween.Reverses then
-			return 0, true
-		else
-			return 1, true
+	if total > 0 then
+		if diff > total then
+			if tween.Reverses then
+				return 0, true
+			else
+				return 1, true
+			end
 		end
 	end
 
@@ -130,7 +147,7 @@ function Helper.getAlpha(tween: TweenInfo | TweenArray, diff: number): (number, 
 	end
 
 	alpha = TweenService:GetValue(alpha, tween.EasingStyle, tween.EasingDirection)
-	
+
 	return alpha, false
 end
 
@@ -150,10 +167,12 @@ function Helper.getFinalAlpha(tween: (TweenInfo | TweenArray)?)
 end
 
 function Helper.lerp(alpha: number, start: any, final: any): any
+	if not table.find(settings.SUPPORTED_TYPES, typeof(start)) then
+		return alpha >= 0.5 and final or start
+	end
+	
 	if typeof(start) == "number" then
 		return start + (final - start) * alpha
-	elseif typeof(start) == "string" then
-		return final:sub(1, math.floor(#final * alpha))
 	else
 		return start:Lerp(final, alpha)
 	end
