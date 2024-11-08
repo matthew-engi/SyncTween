@@ -476,7 +476,6 @@ end
 function SyncTween.get(object: Instance, player: Player?): { Sync }
 	if RunService:IsServer() then
 		local running: { Sync } = {}
-		print(Controllers)
 
 		-- Only return the tweens that are running for the player
 		local objectControllers = Controllers[object]
