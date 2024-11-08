@@ -5,6 +5,8 @@
 
 **SyncTween** is a tweening library designed to help server-to-client animations, with several features that other modules do not offer.
 
+[![Roblox](upload://aLgGDF1G6e7YEACjaw9UJv5mTBA.png)](https://www.roblox.com/games/89151535347409/SyncTween-Demonstration) [![Repository](upload://WGWJSbuaog0HiwFuX0sF3BiKbE.png)](https://github.com/CreacOwo/SyncTween)
+
 ---
 
 ## Links 🔗
