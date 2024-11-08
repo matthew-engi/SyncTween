@@ -26,7 +26,7 @@ type SyncImpl = {
 	new: (
 		object: Instance, tweenInfo: Tweens?,
 		properties: { [string]: any }?, replicate: boolean?,
-		sync: (boolean | number)?, uuid: string?, start: number?,
+		sync: (boolean | number)?, additional: { [string]: any }?, uuid: string?, start: number?,
 		delta: number?, original: { [string]: any }?
 	) -> Sync,
 
@@ -42,6 +42,7 @@ type SyncImpl = {
 type self = {
 	-- Variables:
 	sync: (boolean | number)?, -- Default: False
+	additional: { [string]: any };
 	object: Instance,
 	replicate: boolean?, -- Default: True
 	UUID: string,
@@ -208,7 +209,7 @@ local Controller = {
 				if typeof(self.tween) == "string" then
 					local Implementation: CustomImpl = Custom[self.tween]
 					if Implementation and Implementation.orig then
-						self.original = Implementation.orig(self.object, self.original, self.properties)
+						self.original = Implementation.orig(self.object, self.original, self.properties, self.additional)
 					end
 				elseif self.tween then
 					-- 2-3. Set time (Predict end).
@@ -257,7 +258,7 @@ local Controller = {
 				if typeof(self.tween) == "string" then
 					local Implementation: CustomImpl = Custom[self.tween]
 					if Implementation then
-						self.temporary = Implementation.clk(Finished, self.object, self.original, self.properties, self.delta, FPS)
+						self.temporary = Implementation.clk(Finished, self.object, self.original, self.properties, self.additional, self.delta, FPS)
 					end
 				elseif self.tween then
 					if not self.properties then
@@ -414,13 +415,14 @@ end
 -------------------------------------------------------------------------------------------------
 
 -- // Constructor
-function SyncTween.new(object, tweenInfo, properties, replicate, sync, uuid, start, delta, original): Sync
+function SyncTween.new(object, tweenInfo, properties, replicate, sync, additional, uuid, start, delta, original): Sync
 	local self = {}
 
 	-- Define:
 	self.sync = sync
 	self.object = object
 	self.replicate = true
+	self.additional = additional or {}
 	self.UUID = uuid or HttpService:GenerateGUID(false)
 
 	-- Time:
@@ -528,7 +530,7 @@ else
 	local function handleRequest(data: Sync, creation: boolean, reset: boolean?)
 		if creation then
 			SyncTween.new(data.object, data.tween, data.properties, data.replicate,
-				data.sync, data.UUID, data.start, data.delta, data.original
+				data.sync, data.additional, data.UUID, data.start, data.delta, data.original
 			):Play()
 		else
 			local objectControllers = Controllers[data.object]
