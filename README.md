@@ -7,21 +7,21 @@
 
 ---
 
-## Links 🔗
+## Links
 - More information on TweenService found [here](https://create.roblox.com/docs/reference/engine/classes/TweenService).
 - If you are unfamiliar with how replication works, please look at [this](https://devforum.roblox.com/t/client-replication-101-the-guide-to-replicating-effects-to-clients) DevForum post.
 - This project was inspired by [TweenService2](https://github.com/Steadyon/TweenServiceV2), although not built onto it.
 
 ---
 
-## Advantages 👍
+## Advantages
 1. **Lower Server Load**  
    By handling animations on the client side, SyncTween reduces the processing burden on the server.
 
 2. **Smoother animations**  
     Compared to the server, the client runs at a faster clock, meaning the animations will not be "choppy".
     
-## Key Features 🔑
+## Key Features
 1. **Syncing Animations**  
    SyncTween allows animations to be synchronized across all clients. Here's the definition of "synchronization":
    - Synchronization ensures that all clients see the animations in the same state at the same time.
@@ -45,7 +45,7 @@
 
 ---
 
-## How to Use SyncTween ❓
+## How to Use SyncTween
 
 To construct a SyncTween, use the following syntax:
 
@@ -89,14 +89,14 @@ SyncTween.new(
 
 ---
 
-## Global Methods 🔓
+## Global Methods
 - `SyncTween.get(object: Instance, player: Player): { Sync }`  
   Retrieve all animations currently playing on the specified object.
   On the client, this will return everything that is playing, on the server, it will return only Syncs that the player can view.
 
 ---
 
-## SyncTween Class Methods 🔒
+## SyncTween Class Methods
 - `Play(players: { Player }?)`  
   Start the animation.  
   Ability to set the scope on who receives the animation.
@@ -110,7 +110,7 @@ SyncTween.new(
 
 ---
 
-## Summary 💬
+## Summary
 You can create a SyncTween (or "Sync") using `SyncTween.new()`. This class inherits the usual tween methods (`:Play()`, `:Pause()`, `:Cancel()`) while offering additional configuration options, such as:
 - `tweenInfo`
 - `replicate`
