@@ -3,7 +3,7 @@
 ### Created by @creaco - October 30th, 2024  
 *Licensed under the GNU GPLv3 License*
 
-**SyncTween** is a tweening library designed to facilitate server-to-client animations, with several features that go beyond traditional tweening modules.
+**SyncTween** is a tweening library designed to help server-to-client animations, with several features that other modules do not offer.
 
 ---
 

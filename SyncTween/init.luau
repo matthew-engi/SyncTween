@@ -221,7 +221,6 @@ local Controller = {
 							task.wait(deltaLeft)
 
 							self.Completed:Fire()
-							print("this")
 							self:Pause()
 						end)
 						if self.waiter then coroutine.resume(self.waiter) end
@@ -251,7 +250,6 @@ local Controller = {
 				-- Listen to the completion of the tween.
 				self.listener = Finished:Once(function()
 					self.Completed:Fire()
-					print("this")
 					self:Pause()
 				end)
 
@@ -365,7 +363,7 @@ local function addSync(data: Sync, players: { Player }?)
 	local objectControls: Controls = Controllers[data.object]
 
 	if objectControls then
-		if objectControls.data[data.UUID] then print("Duplicate, abort") return end
+		if objectControls.data[data.UUID] then return end
 		objectControls.amount += 1
 	else
 		objectControls = {
@@ -501,7 +499,6 @@ function SyncTween:Play(players)
 end
 
 function SyncTween:Pause()
-	print("Paused?")
 	removeSync(self)
 end
 
