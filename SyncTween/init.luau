@@ -290,7 +290,11 @@ local Controller = {
 						end)
 					else
 						-- The animation does not need to be synchronized with the server.
-						self.tween = Helper.modifyTween(self.tween, "Time", self.tween.Time - self.delta)
+						local totalTime: number = Helper.getFullTweenTime(self.tween)
+						if totalTime > 0 then -- If it's not infinite, account for the delay
+							self.tween = Helper.modifyTween(self.tween, "Time", self.tween.Time - self.delta)
+						end
+						
 						self.animation = TweenService:Create(self.object, self.tween, self.properties)
 
 						if self.animation then
@@ -472,13 +476,14 @@ end
 function SyncTween.get(object: Instance, player: Player?): { Sync }
 	if RunService:IsServer() then
 		local running: { Sync } = {}
+		print(Controllers)
 
 		-- Only return the tweens that are running for the player
 		local objectControllers = Controllers[object]
 		if objectControllers then
-			for UUID, sync in pairs(objectControllers.data) do
+			for instance, sync in pairs(objectControllers.data) do
 				if not sync then continue end
-				local private = objectControllers.private[UUID]
+				local private = objectControllers.private[sync.UUID]
 				local scope = private.scope
 
 				if not player or not scope or table.find(scope, player) then
