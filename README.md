@@ -56,6 +56,7 @@ SyncTween.new(
     properties: { [string]: any }?,                         -- Properties you want to animate.
     replicate: boolean?,                                    -- Should the animation be replicated to the server?
     sync: (boolean | number)?,                              -- Synchronize all clients / set framerate.
+    additional: { [string]: any }?,                         -- Additional data for custom animations.
     uuid: string?                                           -- UUID of the animation (optional).
 )
 ```
