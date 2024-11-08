@@ -40,7 +40,7 @@
 5. **Selective Framerate**
    Make certain animations run at a lower framerate to decrease the client load.
 
-## Current Limitations ⚠️
+## Current Limitations
 1. Custom animations cannot be paused.
 
 ---
