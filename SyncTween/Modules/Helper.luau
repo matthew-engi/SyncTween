@@ -33,14 +33,35 @@ function Helper.getProperty(object: Instance, property: string): any?
 	end
 end
 
-function Helper.getAllProperties(object: Instance, properties: { [string]: any }): { [string]: any }
-	local values: { [string]: any } = {}
-
-	for property, value in pairs(properties) do
-		values[property] = Helper.getProperty(object, property)
+function Helper.countProperties(properties: { [string]: any }): number
+	local counter: number = 0
+	
+	for _ in properties do
+		counter += 1
 	end
 	
-	return values
+	return counter
+end
+
+function Helper.getPropertyAtCurrentTime(start: number?, delta: number, tween: (TweenInfo | TweenArray)?, original: any, final: any)
+	if not start then return original end
+	if not tween then return final end
+	
+	local delta = (workspace:GetServerTimeNow() - start) + delta
+
+	local alpha: number = (tween ~= nil) 
+		and Helper.getAlpha(tween, delta) or 1
+
+	return Helper.lerp(
+		alpha, original, final
+	)
+end
+
+function Helper.getAllProperties(original: { [string]: any }, object: Instance, properties: { [string]: any })
+	for property, value in pairs(properties) do
+		if original[property] then continue end
+		original[property] = Helper.getProperty(object, property)
+	end
 end
 
 function Helper.changeProperty(object: Instance, property: string, value: any)

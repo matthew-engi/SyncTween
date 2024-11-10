@@ -1,5 +1,5 @@
 --!strict
--- Version 1.0.1
+-- Version 1.0.2
 
 local Modules = script:WaitForChild("Modules")
 
@@ -18,7 +18,7 @@ type Tweens = TweenInfo | TweenArray | string
 
 -- // Created Types
 type Data = { [string]: Sync? }
-type Private = { [string]: { scope: { Player }? }}
+type Private = { [string]: { scope: { Player }?, n_prop: number? }}
 
 type SyncImpl = {
 	__index: SyncImpl,
@@ -164,7 +164,6 @@ local Controller = {
 		if value then
 			-- Here, we are adding a new controller to the list of controllers (Playing).
 			-------------------------------------------------------------------------------------------------
-
 			if self.properties then
 				for property in self.properties do
 					-- Pause animations that also modify the same property.
@@ -172,14 +171,29 @@ local Controller = {
 						if not (controller and controller.properties) then continue end
 						if controller.UUID == self.UUID then continue end
 						
-						if controller.properties[property] then
-							controller:Pause()
+						local controllerPrivate = Controllers[self.object].private[controller.UUID]
+						if controller.properties[property] and controllerPrivate.n_prop then
+							-- We will then remove the properties from the array and make sure theres no other properties tweening.
+							controllerPrivate.n_prop -= 1
+							
+							if controllerPrivate.n_prop <= 0 then
+								controller:Pause()
+							else
+								if replicateRelative and controller.tween and typeof(controller.tween) ~= "string" then
+									self.original[property] = Helper.getPropertyAtCurrentTime(
+										controller.start, controller.delta, controller.tween, 
+										controller.original[property], controller.properties[property]
+									)
+								end
+								
+								controller.properties[property] = nil
+							end
 						end
 					end
 				end
-				
+								
 				if replicateRelative then
-					self.original = Helper.getAllProperties(self.object, self.properties)
+					Helper.getAllProperties(self.original, self.object, self.properties)
 				end
 			end
 			
@@ -384,8 +398,8 @@ local function addSync(data: Sync, players: { Player }?)
 	end
 	objectControls.private[data.UUID] = objectControls.private[data.UUID] or {}
 
+	local private = objectControls.private[data.UUID]
 	if players then
-		local private = objectControls.private[data.UUID]
 		local scope = private.scope
 		
 		if scope then
@@ -393,6 +407,10 @@ local function addSync(data: Sync, players: { Player }?)
 		else
 			private.scope = players
 		end
+	end
+	
+	if data.properties then
+		private.n_prop = Helper.countProperties(data.properties)
 	end
 		
 	Controllers[data.object] = objectControls
@@ -586,5 +604,12 @@ else
 	end)
 end
 -------------------------------------------------------------------------------------------------
+
+coroutine.wrap(function()
+	while true do
+		task.wait(20)
+		print(Controllers)
+	end
+end)()
 
 return SyncTween
