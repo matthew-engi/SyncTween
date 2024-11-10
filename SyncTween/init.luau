@@ -1,4 +1,5 @@
 --!strict
+-- Version 1.0.1
 
 local Modules = script:WaitForChild("Modules")
 
@@ -155,6 +156,9 @@ local Controller = {
 	__newindex = function(array, index, value, reset)
 		local self: Sync = value or table.clone(array[index] :: Sync)
 		local private = Controllers[self.object].private[self.UUID]
+		local replicateRelative: boolean = RunService:IsServer() and self.replicate
+			or RunService:IsClient() and not self.replicate
+		
 		rawset(array, index, value)
 
 		if value then
@@ -162,10 +166,6 @@ local Controller = {
 			-------------------------------------------------------------------------------------------------
 
 			if self.properties then
-				if self.start == 0 then
-					self.original = Helper.getAllProperties(self.object, self.properties)
-				end
-			
 				for property in self.properties do
 					-- Pause animations that also modify the same property.
 					for _, controller in pairs(array) do
@@ -177,8 +177,12 @@ local Controller = {
 						end
 					end
 				end
+				
+				if replicateRelative then
+					self.original = Helper.getAllProperties(self.object, self.properties)
+				end
 			end
-
+			
 			-------------------------------------------------------------------------------------------------
 			self.Played:Fire()
 			-------------------------------------------------------------------------------------------------
@@ -233,7 +237,7 @@ local Controller = {
 				local Finished: TweenSignal = Signal.new()
 				local FPS = typeof(self.sync) == "number" and self.sync or settings.FPS
 				local svrDelay: number = (workspace:GetServerTimeNow() - self.start) 
-				
+								
 				-- The time taken for the information to the client needs to be added as if it was a delta
 				self.delta += svrDelay
 
@@ -345,7 +349,8 @@ local Controller = {
 				-------------------------------------------------------------------------------------------------
 			end
 			
-			if not reset and (self.replicate or RunService:IsClient()) then
+			-- Only replicate if it's the server and self.replicate or the client and not self.replicate
+			if not reset and replicateRelative then
 				self.delta = (workspace:GetServerTimeNow() - self.start) + self.delta
 
 				if typeof(self.tween) ~= "string" and self.properties then
