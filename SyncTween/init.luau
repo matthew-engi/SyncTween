@@ -605,11 +605,4 @@ else
 end
 -------------------------------------------------------------------------------------------------
 
-coroutine.wrap(function()
-	while true do
-		task.wait(20)
-		print(Controllers)
-	end
-end)()
-
 return SyncTween
