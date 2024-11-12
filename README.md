@@ -102,7 +102,7 @@ SyncTween.new(
   Start the animation.  
   Ability to set the scope on who receives the animation.
 
-- `Pause()`  
+- `Pause(delta: number?)`  
   Pause the animation.  
   (Does not apply to custom animations)
 
