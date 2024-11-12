@@ -76,7 +76,8 @@ function Helper.changeProperty(object: Instance, property: string, value: any)
 	end
 end
 
-function Helper.bulkChangePropertyWithAlpha(object: Instance, original: { [string]: any }, final: { [string]: any }, alpha: number)
+function Helper.bulkChangePropertyWithAlpha(object: Instance, original: { [string]: any }, final: { [string]: any }?, alpha: number)
+	if not final then return end
 	for property, value in pairs(final) do
 		Helper.changeProperty(object, property,
 			value and Helper.lerp(alpha, original[property], value) or original[property]
@@ -131,13 +132,16 @@ function Helper.getCycleTweenTime(tween: TweenInfo | TweenArray): number
 	return base + tween.DelayTime
 end
 
-function Helper.getFullTweenTime(tween: TweenInfo | TweenArray): number
+function Helper.getFullTweenTime(tween: TweenInfo | TweenArray | string): number
+	if typeof(tween) == "string" then return 0 end
 	return Helper.getCycleTweenTime(tween) * (
 		tween.RepeatCount + 1
 	)
 end
 
-function Helper.getAlpha(tween: TweenInfo | TweenArray, diff: number): (number, boolean)
+function Helper.getAlpha(tween: (TweenInfo | TweenArray | string)?, diff: number): (number, boolean)
+	if not tween or typeof(tween) == "string" then return 1, true end
+	
 	local alpha: number = 0
 	local new_rel: number = 0
 
@@ -155,7 +159,7 @@ function Helper.getAlpha(tween: TweenInfo | TweenArray, diff: number): (number, 
 			end
 		end
 	end
-
+	
 	if relative < tween.DelayTime then
 		alpha = 0
 	else

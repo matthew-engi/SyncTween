@@ -1,5 +1,5 @@
 --!strict
--- Version 1.0.3
+-- Version 1.0.4
 
 local Modules = script:WaitForChild("Modules")
 
@@ -36,8 +36,8 @@ type SyncImpl = {
 
 	-- Object Methods
 	Play: (self: Sync, players: { Player }?) -> (),
-	Pause: (self: Sync) -> (),
-	Cancel: (self: Sync, original: { [string]: any }?) -> (),
+	Pause: (self: Sync, delta: number?) -> (),
+	Cancel: (self: Sync) -> (),
 }
 
 type self = {
@@ -78,7 +78,7 @@ export type Sync = typeof(
 )
 
 type ControllerImpl = {
-	__newindex: (array: Data, index: string, value: Sync?, reset: boolean?) -> (),
+	__newindex: (array: Data, index: string, value: Sync?) -> (),
 }
 
 type Controller = typeof(
@@ -153,7 +153,7 @@ end
 
 -- // Private Methods
 local Controller = {
-	__newindex = function(array, index, value, reset)
+	__newindex = function(array, index, value)
 		local self: Sync = value or table.clone(array[index] :: Sync)
 		local private = Controllers[self.object].private[self.UUID]
 		local replicateRelative: boolean = RunService:IsServer() and self.replicate
@@ -200,12 +200,12 @@ local Controller = {
 			-------------------------------------------------------------------------------------------------
 			self.Played:Fire()
 			-------------------------------------------------------------------------------------------------
-
+			self.start = self.start or workspace:GetServerTimeNow()
+			
 			if RunService:IsServer() then				
 				local players: { Player } = private.scope or Players:GetPlayers()
 
 				-- On the server, we take care of distributing the tween to the clients.
-				self.start = workspace:GetServerTimeNow()
 				for _, player in players do
 					signalTween:FireClient(player, self, true)
 				end
@@ -228,6 +228,7 @@ local Controller = {
 					local Implementation: CustomImpl = Custom[self.tween]
 					if Implementation and Implementation.orig then
 						self.original = Implementation.orig(self.object, self.original, self.properties, self.additional)
+						self.properties = self.original
 					end
 				elseif self.tween then
 					-- 2-3. Set time (Predict end).
@@ -250,10 +251,7 @@ local Controller = {
 				-- Variables:
 				local Finished: TweenSignal = Signal.new()
 				local FPS = typeof(self.sync) == "number" and self.sync or settings.FPS
-				local svrDelay: number = (workspace:GetServerTimeNow() - self.start) 
-								
-				-- The time taken for the information to the client needs to be added as if it was a delta
-				self.delta += svrDelay
+				local currentDelta: number = (workspace:GetServerTimeNow() - self.start) + self.delta
 
 				-------------------------------------------------------------------------------------------------
                 --[[
@@ -283,7 +281,7 @@ local Controller = {
 						Finished:Fire()
 						return
 					end
-
+					
 					-- 2-3. Synchronized / Unsynchronized Animation
 					if self.sync then
 						-- The animation needs to be synchronized with the server.
@@ -296,10 +294,10 @@ local Controller = {
 
 							-- Accumulate delta time and prevent excessive updates
 							if os.clock() - clk < 1 / FPS then return end
-							self.delta += (os.clock() - clk)
+							currentDelta += (os.clock() - clk)
 							clk = os.clock()
 
-							local alpha, overflow = Helper.getAlpha(self.tween, self.delta)
+							local alpha, overflow = Helper.getAlpha(self.tween, currentDelta)
 							saturated = overflow
 
 							Helper.bulkChangePropertyWithAlpha(self.object, self.original, self.properties, alpha)
@@ -311,7 +309,7 @@ local Controller = {
 						-- The animation does not need to be synchronized with the server.
 						local totalTime: number = Helper.getFullTweenTime(self.tween)
 						if totalTime > 0 then -- If it's not infinite, account for the delay
-							self.tween = Helper.modifyTween(self.tween, "Time", self.tween.Time - self.delta)
+							self.tween = Helper.modifyTween(self.tween, "Time", self.tween.Time - currentDelta)
 						end
 						
 						self.animation = TweenService:Create(self.object, self.tween, self.properties)
@@ -334,19 +332,11 @@ local Controller = {
 			-- Here, we are removing the controller from the list of controllers (Pausing).
 			-------------------------------------------------------------------------------------------------
 			if RunService:IsServer() then
-				-- Variables:
-				local players: { Player } = private.scope or Players:GetPlayers()
-
 				-- Cleanup:
 				if self.waiter and coroutine.status(self.waiter) == "suspended" then
 					coroutine.close(self.waiter)
 				end
 				self.waiter = nil
-
-				-- On the server, we take care of distributing the tween to the clients.
-				for _, player in players do
-					signalTween:FireClient(player, self, false, reset)
-				end
 			else
 				-- Cleanup:
 				if self.animation then self.animation:Pause() self.animation = nil end
@@ -363,17 +353,12 @@ local Controller = {
 				-------------------------------------------------------------------------------------------------
 			end
 			
-			-- Only replicate if it's the server and self.replicate or the client and not self.replicate
-			if not reset and replicateRelative then
-				self.delta = (workspace:GetServerTimeNow() - self.start) + self.delta
+			if RunService:IsServer() then
+				local players: { Player } = private.scope or Players:GetPlayers()
 
-				if typeof(self.tween) ~= "string" and self.properties then
-					local alpha: number = (self.tween ~= nil) 
-						and Helper.getAlpha(self.tween, self.delta) or 1
-
-					Helper.bulkChangePropertyWithAlpha(
-						self.object, self.original, self.properties, alpha
-					)
+				-- On the server, we take care of distributing the tween to the clients.
+				for _, player in players do
+					signalTween:FireClient(player, self, false)
 				end
 			end
 		end
@@ -417,13 +402,13 @@ local function addSync(data: Sync, players: { Player }?)
 	objectControls.data[data.UUID] = data
 end
 
-local function removeSync(data: Sync, reset: boolean?)
+local function removeSync(data: Sync)
 	local objectControls: Controls = Controllers[data.object]
 	if not objectControls then return end
 
 	local metatable: ControllerImpl = getmetatable(objectControls.data)
 	metatable.__newindex(
-		rawget(objectControls, "data"), data.UUID, nil, reset
+		rawget(objectControls, "data"), data.UUID, nil
 	)
 
 	objectControls.amount -= 1
@@ -450,7 +435,7 @@ function SyncTween.new(object, tweenInfo, properties, replicate, sync, additiona
 
 	-- Time:
 	self.delta = delta or 0
-	self.start = start or 0
+	self.start = start
 
 	-- Properties:
 	self.original = original or {}
@@ -527,19 +512,22 @@ function SyncTween:Play(players)
 	addSync(self, players)
 end
 
-function SyncTween:Pause()
+function SyncTween:Pause(delta)
+	self.delta = (delta ~= nil and delta) 
+		or (workspace:GetServerTimeNow() - self.start + self.delta)
 	removeSync(self)
+	
+	self.start = nil
+	
+	if RunService:IsServer() and not self.replicate then return end
+	local alpha = Helper.getAlpha(self.tween, self.delta)
+	Helper.bulkChangePropertyWithAlpha(
+		self.object, self.original, self.properties, alpha
+	)
 end
 
-function SyncTween:Cancel(original)
-	removeSync(self, true)
-
-	-- Reset the properties to the original ones
-	Helper.bulkChangePropertyWithAlpha(
-		self.object, self.original, {}, 0
-	)
-
-	self.delta = 0
+function SyncTween:Cancel()
+	self:Pause(0)
 	table.clear(self.original)
 end
 
@@ -550,7 +538,7 @@ if RunService:IsServer() then
 		return SyncTween.get(object, player)
 	end
 else
-	local function handleRequest(data: Sync, creation: boolean, reset: boolean?)
+	local function handleRequest(data: Sync, creation: boolean)
 		if creation then
 			SyncTween.new(data.object, data.tween, data.properties, data.replicate,
 				data.sync, data.additional, data.UUID, data.start, data.delta, data.original
@@ -561,12 +549,8 @@ else
 			
 			local Potential: Sync? = objectControllers.data[data.UUID]
 			if not Potential then return end
-			
-			if reset then
-				Potential:Cancel(data.original)
-			else
-				Potential:Pause()
-			end
+
+			Potential:Pause(data.delta)
 		end
 	end
 	
@@ -587,8 +571,8 @@ else
 		end
 	end
 
-	signalTween.OnClientEvent:Connect(function(data: Sync, creation: boolean, reset: boolean?)
-		handleRequest(data, creation, reset)
+	signalTween.OnClientEvent:Connect(function(data: Sync, creation: boolean)
+		handleRequest(data, creation)
 	end)
 	
 	for _, object in CollectionService:GetTagged(settings.COLLECTION_TAG) do
