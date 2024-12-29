@@ -65,13 +65,13 @@ function Helper.getAllProperties(original: { [string]: any }, object: Instance, 
 end
 
 function Helper.changeProperty(object: Instance, property: string, value: any)
-	local success = pcall(function()
+	local success, err = pcall(function()
 		(object :: any)[property] = value
 	end)
 
 	if not success then
 		warn(
-			("Property %s is not valid for class %s."):format(property, object.ClassName)
+			("There was an error while apply property %s on the class %s: %s"):format(property, object.ClassName, err)
 		)
 	end
 end

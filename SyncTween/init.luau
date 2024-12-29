@@ -1,5 +1,5 @@
 --!strict
--- Version 1.0.4
+-- Version 1.0.5
 
 local Modules = script:WaitForChild("Modules")
 
@@ -160,7 +160,7 @@ local Controller = {
 			or RunService:IsClient() and not self.replicate
 		
 		rawset(array, index, value)
-
+		
 		if value then
 			-- Here, we are adding a new controller to the list of controllers (Playing).
 			-------------------------------------------------------------------------------------------------
@@ -191,12 +191,12 @@ local Controller = {
 						end
 					end
 				end
-								
-				if replicateRelative then
+				
+				if replicateRelative or RunService:IsClient() then
 					Helper.getAllProperties(self.original, self.object, self.properties)
-				end
+				end				
 			end
-			
+						
 			-------------------------------------------------------------------------------------------------
 			self.Played:Fire()
 			-------------------------------------------------------------------------------------------------
@@ -274,7 +274,7 @@ local Controller = {
 				if typeof(self.tween) == "string" then
 					local Implementation: CustomImpl = Custom[self.tween]
 					if Implementation then
-						self.temporary = Implementation.clk(Finished, self.object, self.original, self.properties, self.additional, self.delta, FPS)
+						self.temporary = Implementation.run(Finished, self.object, self.original, self.properties, self.additional, self.delta, FPS)
 					end
 				elseif self.tween then
 					if not self.properties then
@@ -397,7 +397,7 @@ local function addSync(data: Sync, players: { Player }?)
 	if data.properties then
 		private.n_prop = Helper.countProperties(data.properties)
 	end
-		
+			
 	Controllers[data.object] = objectControls
 	objectControls.data[data.UUID] = data
 end
@@ -576,7 +576,9 @@ else
 	end)
 	
 	for _, object in CollectionService:GetTagged(settings.COLLECTION_TAG) do
-		handleCollection(object, true)
+		coroutine.wrap(function()
+			handleCollection(object, true)
+		end)()
 	end
 
 	CollectionService:GetInstanceAddedSignal(settings.COLLECTION_TAG):Connect(function(instance)

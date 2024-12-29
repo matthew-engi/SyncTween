@@ -7,7 +7,7 @@ local RunService = game:GetService("RunService")
 local Signal = require(script.Parent.Signal)
 
 export type CustomImpl = {
-	clk: (
+	run: (
 		signal: Signal.RBXScriptSignal, object: Instance, original: { [string]: any }?,
 		properties: { [string]: any }?, additional: { [string]: any }, totalDelta: number, FPS: number
 	) -> ...any,
@@ -24,6 +24,19 @@ export type CustomImpl = {
 
 -- // Example:
 	SyncTween.new(workspace.Part.Highlight, "Rainbow") -> This will use the `Rainbow` implementation.
+
+-- // How to make a custom implementation:
+	- Create a new key in the `Custom` table.
+	- The key should be the name of the implementation.
+	- The value should be a table with the following keys:
+		- `run` -> This is run callback. It will only run once.
+			The value returned will be stored as a temporary variable that will be passed inside of the clean method.
+		- `clear` -> This is the clear callback. It will only run once.
+			This is used to do whatever with the temporary variable (ex: Disconnect)
+		- `orig` -> This is the original callback. It will only run once.
+			This is used to store the original properties of the object incase it is needed to cancel.
+
+	Custom animations are primarily used in continuous animations.
 --]]
 
 ----------------------------------------------------
@@ -45,7 +58,7 @@ end
 
 Custom.Rainbow = {
 	-- Example for an animated Highlight.
-	clk = function(signal, object, original, properties, additional, totalDelta, FPS)
+	run = function(signal, object, original, properties, additional, totalDelta, FPS)
 		local object: Highlight = (object :: Highlight)
 
 		local callback = function(delta: number)
@@ -68,7 +81,7 @@ Custom.Rainbow = {
 }
 
 Custom.Rotation = {
-	clk = function(signal, object, original, properties, additional, totalDelta, FPS)
+	run = function(signal, object, original, properties, additional, totalDelta, FPS)
 		local object: BasePart = (object :: BasePart)
 
 		local callback = function(delta: number)
@@ -91,7 +104,7 @@ Custom.Rotation = {
 }
 
 Custom.cRotation = {
-	clk = function(signal, object, original, properties, additional, totalDelta, FPS)
+	run = function(signal, object, original, properties, additional, totalDelta, FPS)
 		local object: BasePart = (object :: BasePart)
 
 		local callback = function(delta: number)
