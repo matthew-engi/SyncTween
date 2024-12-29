@@ -1,5 +1,5 @@
 --!strict
--- Version 1.0.6
+-- Version 1.0.7
 
 local Modules = script:WaitForChild("Modules")
 
@@ -144,7 +144,7 @@ if RunService:IsServer() then
 	setmetatable(Controllers, {
 		__newindex = function(array: { [Instance]: { Sync } }, index: Instance, value: Controls)
 			rawset(array, index, value)
-						
+
 			if value then index:AddTag(settings.COLLECTION_TAG)
 			else index:RemoveTag(settings.COLLECTION_TAG) end
 		end
@@ -158,9 +158,9 @@ local Controller = {
 		local private = Controllers[self.object].private[self.UUID]
 		local replicateRelative: boolean = RunService:IsServer() and self.replicate
 			or RunService:IsClient() and not self.replicate
-		
+
 		rawset(array, index, value)
-		
+
 		if value then
 			-- Here, we are adding a new controller to the list of controllers (Playing).
 			-------------------------------------------------------------------------------------------------
@@ -170,12 +170,12 @@ local Controller = {
 					for _, controller in pairs(array) do
 						if not (controller and controller.properties) then continue end
 						if controller.UUID == self.UUID then continue end
-						
+
 						local controllerPrivate = Controllers[self.object].private[controller.UUID]
 						if controller.properties[property] and controllerPrivate.n_prop then
 							-- We will then remove the properties from the array and make sure theres no other properties tweening.
 							controllerPrivate.n_prop -= 1
-							
+
 							if controllerPrivate.n_prop <= 0 then
 								controller:Pause()
 							else
@@ -185,23 +185,23 @@ local Controller = {
 										controller.original[property], controller.properties[property]
 									)
 								end
-								
+
 								controller.properties[property] = nil
 							end
 						end
 					end
 				end
-				
+
 				if replicateRelative or RunService:IsClient() then
 					Helper.getAllProperties(self.original, self.object, self.properties)
 				end				
 			end
-						
+
 			-------------------------------------------------------------------------------------------------
 			self.Played:Fire()
 			-------------------------------------------------------------------------------------------------
 			self.start = self.start or workspace:GetServerTimeNow()
-			
+
 			if RunService:IsServer() then				
 				local players: { Player } = private.scope or Players:GetPlayers()
 
@@ -233,7 +233,7 @@ local Controller = {
 				elseif self.tween then
 					-- 2-3. Set time (Predict end).
 					local tweenTime: number = Helper.getFullTweenTime(self.tween)
-					
+
 					if tweenTime > 0 then
 						self.waiter = coroutine.create(function()
 							local deltaLeft: number = tweenTime - self.delta
@@ -281,7 +281,7 @@ local Controller = {
 						Finished:Fire()
 						return
 					end
-					
+
 					-- 2-3. Synchronized / Unsynchronized Animation
 					if self.sync then
 						-- The animation needs to be synchronized with the server.
@@ -311,7 +311,7 @@ local Controller = {
 						if totalTime > 0 then -- If it's not infinite, account for the delay
 							self.tween = Helper.modifyTween(self.tween, "Time", self.tween.Time - currentDelta)
 						end
-						
+
 						self.animation = TweenService:Create(self.object, self.tween, self.properties)
 
 						if self.animation then
@@ -328,7 +328,7 @@ local Controller = {
 			end
 		else			
 			if not self then return end
-			
+
 			-- Here, we are removing the controller from the list of controllers (Pausing).
 			-------------------------------------------------------------------------------------------------
 			if RunService:IsServer() then
@@ -352,7 +352,7 @@ local Controller = {
 				self.temporary = nil
 				-------------------------------------------------------------------------------------------------
 			end
-			
+
 			if RunService:IsServer() then
 				local players: { Player } = private.scope or Players:GetPlayers()
 
@@ -386,18 +386,18 @@ local function addSync(data: Sync, players: { Player }?)
 	local private = objectControls.private[data.UUID]
 	if players then
 		local scope = private.scope
-		
+
 		if scope then
 			table.move(players, 1, #players, #scope + 1, scope)
 		else
 			private.scope = players
 		end
 	end
-	
+
 	if data.properties then
 		private.n_prop = Helper.countProperties(data.properties)
 	end
-			
+
 	Controllers[data.object] = objectControls
 	objectControls.data[data.UUID] = data
 end
@@ -413,7 +413,7 @@ local function removeSync(data: Sync)
 
 	objectControls.amount -= 1
 	objectControls.private[data.UUID] = nil
-	
+
 	if objectControls.amount <= 0 then
 		Controllers[data.object] = nil -- This will fire the list metatable.
 	end
@@ -516,9 +516,9 @@ function SyncTween:Pause(delta)
 	self.delta = (delta ~= nil and delta) 
 		or (workspace:GetServerTimeNow() - self.start + self.delta)
 	removeSync(self)
-	
+
 	self.start = nil
-	
+
 	if RunService:IsServer() and not self.replicate then return end
 	local alpha = Helper.getAlpha(self.tween, self.delta)
 	Helper.bulkChangePropertyWithAlpha(
@@ -539,6 +539,7 @@ if RunService:IsServer() then
 	end
 else
 	local function handleRequest(data: Sync, creation: boolean)
+		if not data.object then return end
 		if creation then
 			SyncTween.new(data.object, data.tween, data.properties, data.replicate,
 				data.sync, data.additional, data.UUID, data.start, data.delta, data.original
@@ -546,14 +547,14 @@ else
 		else
 			local objectControllers = Controllers[data.object]
 			if not objectControllers then return end
-			
+
 			local Potential: Sync? = objectControllers.data[data.UUID]
 			if not Potential then return end
 
 			Potential:Pause(data.delta)
 		end
 	end
-	
+
 	local function handleCollection(object: Instance, creation: boolean)
 		if creation then
 			local tweens = SyncTween.get(object)
@@ -574,7 +575,7 @@ else
 	signalTween.OnClientEvent:Connect(function(data: Sync, creation: boolean)
 		handleRequest(data, creation)
 	end)
-	
+
 	for _, object in CollectionService:GetTagged(settings.COLLECTION_TAG) do
 		coroutine.wrap(function()
 			handleCollection(object, true)
