@@ -1,5 +1,5 @@
 --!strict
--- Version 1.0.7
+-- Version 1.0.8
 
 local Modules = script:WaitForChild("Modules")
 
@@ -26,7 +26,7 @@ type SyncImpl = {
 	-- Contructor
 	new: (
 		object: Instance, tweenInfo: Tweens?,
-		properties: { [string]: any }?, replicate: boolean?,
+		properties: { [string]: any }?, update: boolean?,
 		sync: (boolean | number)?, additional: { [string]: any }?, uuid: string?, start: number?,
 		delta: number?, original: { [string]: any }?
 	) -> Sync,
@@ -45,7 +45,7 @@ type self = {
 	sync: (boolean | number)?, -- Default: False
 	additional: { [string]: any };
 	object: Instance,
-	replicate: boolean?, -- Default: True
+	update: boolean?, -- Default: True
 	UUID: string,
 	tween: Tweens?,
 
@@ -156,8 +156,8 @@ local Controller = {
 	__newindex = function(array, index, value)
 		local self: Sync = value or table.clone(array[index] :: Sync)
 		local private = Controllers[self.object].private[self.UUID]
-		local replicateRelative: boolean = RunService:IsServer() and self.replicate
-			or RunService:IsClient() and not self.replicate
+		local updateRelative: boolean = RunService:IsServer() and self.update
+			or RunService:IsClient() and not self.update
 
 		rawset(array, index, value)
 
@@ -179,7 +179,7 @@ local Controller = {
 							if controllerPrivate.n_prop <= 0 then
 								controller:Pause()
 							else
-								if replicateRelative and controller.tween and typeof(controller.tween) ~= "string" then
+								if updateRelative and controller.tween and typeof(controller.tween) ~= "string" then
 									self.original[property] = Helper.getPropertyAtCurrentTime(
 										controller.start, controller.delta, controller.tween, 
 										controller.original[property], controller.properties[property]
@@ -192,7 +192,7 @@ local Controller = {
 					end
 				end
 
-				if replicateRelative or RunService:IsClient() then
+				if updateRelative or RunService:IsClient() then
 					Helper.getAllProperties(self.original, self.object, self.properties)
 				end				
 			end
@@ -423,14 +423,14 @@ end
 -------------------------------------------------------------------------------------------------
 
 -- // Constructor
-function SyncTween.new(object, tweenInfo, properties, replicate, sync, additional, uuid, start, delta, original): Sync
+function SyncTween.new(object, tweenInfo, properties, update, sync, additional, uuid, start, delta, original): Sync
 	local self = {}
 
 	-- Define:
 	self.sync = sync
 	self.object = object
-	self.replicate = true
 	self.additional = additional or {}
+	self.update = update ~= nil and update or true
 	self.UUID = uuid or HttpService:GenerateGUID(false)
 
 	-- Time:
@@ -473,9 +473,6 @@ function SyncTween.new(object, tweenInfo, properties, replicate, sync, additiona
 	end
 
 	self.tween = ((transformation or tweenInfo) :: Tweens?)
-	if replicate ~= nil then
-		self.replicate = replicate
-	end
 
 	-------------------------------------------------------------------------------------------------
 
@@ -519,7 +516,7 @@ function SyncTween:Pause(delta)
 
 	self.start = nil
 
-	if RunService:IsServer() and not self.replicate then return end
+	if RunService:IsServer() and not self.update then return end
 	local alpha = Helper.getAlpha(self.tween, self.delta)
 	Helper.bulkChangePropertyWithAlpha(
 		self.object, self.original, self.properties, alpha
@@ -541,7 +538,7 @@ else
 	local function handleRequest(data: Sync, creation: boolean)
 		if not data.object then return end
 		if creation then
-			SyncTween.new(data.object, data.tween, data.properties, data.replicate,
+			SyncTween.new(data.object, data.tween, data.properties, data.update,
 				data.sync, data.additional, data.UUID, data.start, data.delta, data.original
 			):Play()
 		else

@@ -54,7 +54,7 @@ SyncTween.new(
     object: Instance,                                       -- The object you want to animate.
     tweenInfo: (TweenInfo | TweenArray | string)?,          -- TweenInfo of the animation.
     properties: { [string]: any }?,                         -- Properties you want to animate.
-    replicate: boolean?,                                    -- Should the animation be replicated to the server?
+    update: boolean?,                                       -- Should the animation be updated to the server?
     sync: (boolean | number)?,                              -- Synchronize all clients / set framerate.
     additional: { [string]: any }?,                         -- Additional data for custom animations.
     uuid: string?                                           -- UUID of the animation (optional).
@@ -114,7 +114,7 @@ SyncTween.new(
 ## Summary
 You can create a SyncTween (or "Sync") using `SyncTween.new()`. This class inherits the usual tween methods (`:Play()`, `:Pause()`, `:Cancel()`) while offering additional configuration options, such as:
 - `tweenInfo`
-- `replicate`
+- `update`
 - `sync`
 - `uuid`
 
