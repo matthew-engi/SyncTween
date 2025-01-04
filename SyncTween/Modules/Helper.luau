@@ -71,7 +71,7 @@ function Helper.changeProperty(object: Instance, property: string, value: any)
 
 	if not success then
 		warn(
-			("There was an error while apply property %s on the class %s: %s"):format(property, object.ClassName, err)
+			("There was an error while apply property %s on the class %s: %s"):format(tostring(property), object.ClassName, err)
 		)
 	end
 end

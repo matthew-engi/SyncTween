@@ -27,7 +27,7 @@ type SyncImpl = {
 	new: (
 		object: Instance, tweenInfo: Tweens?,
 		properties: { [string]: any }?, update: boolean?,
-		sync: (boolean | number)?, additional: { [string]: any }?, uuid: string?, start: number?,
+		sync: (boolean | number)?, additional: { any }?, uuid: string?, start: number?,
 		delta: number?, original: { [string]: any }?
 	) -> Sync,
 
@@ -43,7 +43,7 @@ type SyncImpl = {
 type self = {
 	-- Variables:
 	sync: (boolean | number)?, -- Default: False
-	additional: { [string]: any };
+	additional: { any };
 	object: Instance,
 	update: boolean?, -- Default: True
 	UUID: string,

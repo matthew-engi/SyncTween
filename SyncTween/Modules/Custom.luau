@@ -5,15 +5,16 @@ local RunService = game:GetService("RunService")
 ----------------------------------------------------
 
 local Signal = require(script.Parent.Signal)
+local Helper = require(script.Parent.Helper)
 
 export type CustomImpl = {
 	run: (
 		signal: Signal.RBXScriptSignal, object: Instance, original: { [string]: any }?,
-		properties: { [string]: any }?, additional: { [string]: any }, totalDelta: number, FPS: number
+		properties: { [string]: any }?, additional: { any }, totalDelta: number, FPS: number
 	) -> ...any,
 
 	clear: ( (...any) -> () )?;
-	orig: ( (object: Instance, original: { [string]: any }?, properties: { [string]: any }?, additional: { [string]: any }) -> { [string]: any } )?
+	orig: ( (object: Instance, original: { [string]: any }?, properties: { [string]: any }?, additional: { any }) -> { [string]: any } )?
 }
 ----------------------------------------------------
 
@@ -59,11 +60,13 @@ end
 Custom.Rainbow = {
 	-- Example for an animated Highlight.
 	run = function(signal, object, original, properties, additional, totalDelta, FPS)
-		local object: Highlight = (object :: Highlight)
-
 		local callback = function(delta: number)
 			local hue = delta % 1
-			object.FillColor = Color3.fromHSV(hue, 1, 1)
+			
+			if not properties then return end
+			for _, property in pairs(additional) do
+				Helper.changeProperty(object, property, Color3.fromHSV(hue, 1, 1))
+			end
 		end
 
 		return bindCallbackToSteppedWithFPS(callback, FPS, totalDelta)
@@ -75,8 +78,13 @@ Custom.Rainbow = {
 
 	orig = function(object, properties, original, additional)
 		local object: Highlight = (object :: Highlight)
-
-		return {FillColor = object.FillColor}
+		
+		local properties = {} :: { [string]: any }
+		for _, prop in additional do
+			properties[prop] = Helper.getProperty(object, prop)
+		end
+				
+		return properties
 	end,
 }
 
@@ -106,9 +114,11 @@ Custom.Rotation = {
 Custom.cRotation = {
 	run = function(signal, object, original, properties, additional, totalDelta, FPS)
 		local object: BasePart = (object :: BasePart)
+		local additional = additional :: { Speed: number } -- Cast to the correct type.
 
 		local callback = function(delta: number)
-			local ydir = delta % 360
+			local ydir = delta % 360		
+			
 			object.Orientation = Vector3.new(0, ydir*additional.Speed, 0)
 		end
 
