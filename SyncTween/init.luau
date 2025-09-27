@@ -100,7 +100,7 @@ SyncTween.__index = SyncTween
 --[[
 
 SyncTween - A rich TweenService replication module.
-    Copyright (C) 2024  @creacowo
+    Copyright (C) 2024  @matthew-engi
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
