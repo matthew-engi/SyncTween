@@ -1,5 +1,5 @@
 --!strict
--- Version 1.0.8
+-- Version 1.0.9
 
 local Modules = script:WaitForChild("Modules")
 
@@ -20,8 +20,8 @@ type Tweens = TweenInfo | TweenArray | string
 type Data = { [string]: Sync? }
 type Private = { [string]: { scope: { Player }?, n_prop: number? }}
 
-type SyncImpl = {
-	__index: SyncImpl,
+type SyncTweenMethods = {
+	__index: SyncTweenMethods,
 
 	-- Contructor
 	new: (
@@ -40,7 +40,7 @@ type SyncImpl = {
 	Cancel: (self: Sync) -> (),
 }
 
-type self = {
+type SyncTweenData = {
 	-- Variables:
 	sync: (boolean | number)?, -- Default: False
 	additional: { any };
@@ -73,9 +73,7 @@ type self = {
 	--------------------------
 }
 
-export type Sync = typeof(
-	setmetatable({} :: self, {} :: SyncImpl)
-)
+export type Sync = setmetatable<SyncTweenData, SyncTweenMethods>
 
 type ControllerImpl = {
 	__newindex: (array: Data, index: string, value: Sync?) -> (),
