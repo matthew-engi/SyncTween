@@ -1,7 +1,13 @@
+<div align="center">
+
+<img width="420" height="120" alt="8bc6ab44c426d5e8c2f94df584274968ac9fb5a1" src="https://github.com/user-attachments/assets/897ed81a-03a7-4fe3-a00d-8b85cca88900" />
+
 # SyncTween
 
 ### Created by @matthew-engi - November 8th, 2024  
 *Licensed under the GNU GPLv3 License*
+
+</div>
 
 **SyncTween** is a tweening library designed to help server-to-client animations, with several features that other modules do not offer.
 
